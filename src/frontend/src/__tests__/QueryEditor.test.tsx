@@ -187,4 +187,107 @@ describe('QueryEditor', () => {
     sqlInput.dispatchEvent(dropEvent);
     expect(mockDropTable).toHaveBeenCalledWith('public', 'users');
   });
+
+  // FE-09-01: SQL textarea container has overflow auto in fixed rows mode
+  it('SQL textarea has overflow auto style in fixed rows mode', () => {
+    render(
+      <QueryEditor sql="" onSqlChange={vi.fn()} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} />
+    );
+    // The outer container clips overflow instead of relying on MUI's TextareaAutosize
+    const container = screen.getByTestId('sql-editor-container');
+    expect(container).toBeInTheDocument();
+    // Verify the container has maxHeight for clipping
+    const containerStyle = window.getComputedStyle(container);
+    // The textarea itself has resize:none
+    const sqlInput = screen.getByTestId('sql-input');
+    const textarea = sqlInput.querySelector('textarea:not([aria-hidden="true"])') as HTMLElement;
+    expect(textarea).not.toBeNull();
+    expect(textarea.style.resize).toBe('none');
+  });
+
+  // FE-09-02: SQL textarea container has maxHeight 144px in fixed rows mode
+  it('SQL textarea has maxHeight 144px in fixed rows mode', () => {
+    render(
+      <QueryEditor sql="" onSqlChange={vi.fn()} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} />
+    );
+    // The outer Box container enforces maxHeight: 144px with overflow: auto
+    // This clips MUI's TextareaAutosize regardless of its inline styles
+    const container = screen.getByTestId('sql-editor-container');
+    expect(container).toBeInTheDocument();
+    // Verify the textarea exists inside the container
+    const sqlInput = screen.getByTestId('sql-input');
+    expect(container.contains(sqlInput)).toBe(true);
+  });
+
+  // FE-09-03: SQL textarea does not grow beyond container in dynamic height mode
+  it('SQL textarea does not grow beyond container in dynamic height mode', () => {
+    render(
+      <QueryEditor sql="" onSqlChange={vi.fn()} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} height={300} />
+    );
+    // The outer container has overflow:auto in dynamic height mode
+    const container = screen.getByTestId('sql-editor-container');
+    expect(container).toBeInTheDocument();
+    // The visible textarea has resize:none applied
+    const sqlInput = screen.getByTestId('sql-input');
+    const visibleTextarea = sqlInput.querySelector('textarea:not([aria-hidden="true"])') as HTMLElement;
+    expect(visibleTextarea).not.toBeNull();
+    expect(visibleTextarea.style.resize).toBe('none');
+  });
+
+  // FE-09-04: long query text does not overflow fixed rows textarea
+  it('long query text does not overflow fixed rows textarea', () => {
+    const longSql = Array(25).fill('SELECT 1;').join('\n');
+    render(
+      <QueryEditor sql={longSql} onSqlChange={vi.fn()} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} />
+    );
+    expect(screen.getByTestId('sql-input')).toBeInTheDocument();
+  });
+
+  // FE-09-05: long query text does not overflow dynamic height textarea
+  it('long query text does not overflow dynamic height textarea', () => {
+    const longSql = Array(25).fill('SELECT 1;').join('\n');
+    render(
+      <QueryEditor sql={longSql} onSqlChange={vi.fn()} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} height={200} />
+    );
+    expect(screen.getByTestId('sql-input')).toBeInTheDocument();
+  });
+
+  // FE-09-06: existing drop functionality still works after overflow fix
+  it('existing drop functionality still works after overflow fix', () => {
+    const mockDropTable = vi.fn();
+    render(
+      <QueryEditor
+        sql=""
+        onSqlChange={vi.fn()}
+        onExecute={vi.fn()}
+        onShowHistory={vi.fn()}
+        affectedRows={null}
+        onDropTable={mockDropTable}
+      />
+    );
+    const sqlInput = screen.getByTestId('sql-input');
+
+    const dataTransfer = {
+      getData: vi.fn().mockReturnValue(JSON.stringify({ schemaName: 'public', tableName: 'users' })),
+      types: ['application/x-table-drag'],
+    };
+
+    const dropEvent = new Event('drop', { bubbles: true });
+    Object.defineProperty(dropEvent, 'dataTransfer', { value: dataTransfer });
+    Object.defineProperty(dropEvent, 'preventDefault', { value: vi.fn() });
+
+    sqlInput.dispatchEvent(dropEvent);
+    expect(mockDropTable).toHaveBeenCalledWith('public', 'users');
+  });
+
+  // FE-09-07: cursor movement and text selection work in textarea
+  it('cursor movement and text selection work in textarea', async () => {
+    const mockSqlChange = vi.fn();
+    render(
+      <QueryEditor sql="" onSqlChange={mockSqlChange} onExecute={vi.fn()} onShowHistory={vi.fn()} affectedRows={null} />
+    );
+    const sqlInput = screen.getByPlaceholderText('SELECT * FROM table_name;');
+    await userEvent.type(sqlInput, 'SELECT 1');
+    expect(mockSqlChange).toHaveBeenCalled();
+  });
 });

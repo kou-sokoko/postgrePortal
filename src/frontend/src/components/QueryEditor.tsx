@@ -101,34 +101,57 @@ const QueryEditor: React.FC<QueryEditorProps> = ({ sql, onSqlChange, onExecute, 
           : {}),
       }}
     >
-      <TextField
-        multiline
-        rows={height !== undefined ? undefined : 6}
-        fullWidth
-        placeholder="SELECT * FROM table_name;"
-        value={sql}
-        onChange={(e) => onSqlChange(e.target.value)}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        data-testid="sql-input"
+      <Box
+        data-testid="sql-editor-container"
         sx={{
           mb: 1.5,
-          ...(height !== undefined ? { flex: 1, minHeight: 0 } : {}),
-          '& .MuiOutlinedInput-root': {
-            fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
-            fontSize: '0.85rem',
-            lineHeight: 1.6,
-            backgroundColor: '#fafafa',
-            ...(height !== undefined ? { height: '100%', alignItems: 'flex-start' } : {}),
-          },
-          '& .MuiInputBase-inputMultiline': {
-            ...(height !== undefined
-              ? { height: '100% !important', overflow: 'auto !important', resize: 'none' }
-              : {}),
-          },
+          ...(height !== undefined
+            ? { flex: 1, minHeight: 0, overflow: 'auto' }
+            : { maxHeight: '144px', overflow: 'auto', border: '1px solid rgba(0,0,0,0.23)', borderRadius: 1 }),
         }}
-      />
+      >
+        <TextField
+          multiline
+          fullWidth
+          placeholder="SELECT * FROM table_name;"
+          value={sql}
+          onChange={(e) => onSqlChange(e.target.value)}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          data-testid="sql-input"
+          variant={height !== undefined ? 'outlined' : 'standard'}
+          slotProps={{
+            input: {
+              inputProps: {
+                style: { resize: 'none' as const },
+              },
+            },
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
+              fontSize: '0.85rem',
+              lineHeight: 1.6,
+              backgroundColor: '#fafafa',
+              ...(height !== undefined ? { alignItems: 'flex-start' } : {}),
+            },
+            '& .MuiInput-root': {
+              fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
+              fontSize: '0.85rem',
+              lineHeight: 1.6,
+              backgroundColor: '#fafafa',
+              padding: '8.5px 14px',
+              '&::before, &::after': { display: 'none' },
+            },
+            ...(height !== undefined
+              ? {
+                  '& fieldset': { border: 'none' },
+                }
+              : {}),
+          }}
+        />
+      </Box>
       <Box
         sx={{
           display: 'flex',
