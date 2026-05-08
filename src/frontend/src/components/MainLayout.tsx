@@ -25,6 +25,8 @@ import CreateTableModal from './CreateTableModal';
 import TableStructureModal from './TableStructureModal';
 import QueryEditor from './QueryEditor';
 import ResultTable from './ResultTable';
+import ResizableSplitter from './ResizableSplitter';
+import useResizable from '../hooks/useResizable';
 import { useDatabases } from '../hooks/useDatabases';
 import { useDatabaseOperations } from '../hooks/useDatabaseOperations';
 import { useSchemaOperations } from '../hooks/useSchemaOperations';
@@ -41,7 +43,6 @@ interface QueryTab {
   name: string;
   sql: string;
   queryResult: QueryResult | null;
-  editorHeight: number;
   isHistoryMode: boolean;
 }
 
@@ -139,7 +140,6 @@ const createTab = (): QueryTab => ({
   name: `クエリ${tabCounter++}`,
   sql: '',
   queryResult: null,
-  editorHeight: 220,
   isHistoryMode: false,
 });
 
@@ -165,9 +165,19 @@ const MainLayout: React.FC = () => {
   const [tabs, setTabs] = useState<QueryTab[]>(() => [createTab()]);
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0].id);
 
-  const isDragging = useRef(false);
-  const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
+  // リサイズバーフック
+  const {
+    isDragging: isResizing,
+    containerRef: resizableContainerRef,
+    splitterProps,
+    topHeight,
+    bottomHeight,
+  } = useResizable({
+    initialRatio: 0.3,
+    minTopHeight: 72,
+    minBottomHeight: 120,
+    splitterHeight: 6,
+  });
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -176,30 +186,6 @@ const MainLayout: React.FC = () => {
       prev.map((t) => (t.id === activeTabId ? { ...t, ...patch } : t))
     );
   }, [activeTabId]);
-
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    isDragging.current = true;
-    dragStartY.current = e.clientY;
-    dragStartHeight.current = activeTab.editorHeight;
-
-    const handleMouseMove = (ev: MouseEvent) => {
-      if (!isDragging.current) return;
-      const delta = ev.clientY - dragStartY.current;
-      const newHeight = Math.max(80, Math.min(600, dragStartHeight.current + delta));
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, editorHeight: newHeight } : t))
-      );
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }, [activeTab.editorHeight, activeTabId]);
 
   const connInfoRef = useRef<ConnectionInfo>({
     host: 'localhost',
@@ -554,6 +540,7 @@ const MainLayout: React.FC = () => {
           {/* Right pane */}
           <Box
             data-testid="right-pane"
+            ref={resizableContainerRef}
             sx={{
               flex: 1,
               display: 'flex',
@@ -618,32 +605,51 @@ const MainLayout: React.FC = () => {
               </Tabs>
             </Box>
 
-            {/* Active tab content */}
-            <QueryEditor
-              sql={activeTab.sql}
-              onSqlChange={(sql) => updateActiveTab({ sql })}
-              onExecute={handleExecuteQuery}
-              onShowHistory={handleShowHistory}
-              affectedRows={activeTab.queryResult?.affected_rows ?? null}
-              height={activeTab.editorHeight}
-              onDropTable={handleTableDrop}
-            />
+            {/* Active tab content - resizable layout */}
             <Box
-              onMouseDown={handleDividerMouseDown}
               sx={{
-                height: 6,
-                cursor: 'row-resize',
-                backgroundColor: 'divider',
-                flexShrink: 0,
-                '&:hover': { backgroundColor: 'primary.light' },
+                ...(topHeight !== null
+                  ? { height: topHeight, flexShrink: 0 }
+                  : { flex: '0 0 30%' }),
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
               }}
+            >
+              <QueryEditor
+                sql={activeTab.sql}
+                onSqlChange={(sql) => updateActiveTab({ sql })}
+                onExecute={handleExecuteQuery}
+                onShowHistory={handleShowHistory}
+                affectedRows={activeTab.queryResult?.affected_rows ?? null}
+                height={topHeight ?? undefined}
+                onDropTable={handleTableDrop}
+              />
+            </Box>
+
+            <ResizableSplitter
+              onMouseDown={splitterProps.onMouseDown}
+              isDragging={isResizing}
             />
-            <ResultTable
-              columns={activeTab.queryResult?.columns ?? []}
-              rows={activeTab.queryResult?.rows ?? []}
-              isHistoryMode={activeTab.isHistoryMode}
-              onRowClick={handleHistoryRowClick}
-            />
+
+            <Box
+              sx={{
+                ...(bottomHeight !== null
+                  ? { height: bottomHeight, flexShrink: 0 }
+                  : { flex: 1 }),
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <ResultTable
+                columns={activeTab.queryResult?.columns ?? []}
+                rows={activeTab.queryResult?.rows ?? []}
+                isHistoryMode={activeTab.isHistoryMode}
+                onRowClick={handleHistoryRowClick}
+                height={bottomHeight ?? undefined}
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

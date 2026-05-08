@@ -61,6 +61,23 @@ vi.mock('../components/DatabaseSelector', () => ({
   },
 }));
 
+vi.mock('../components/ResizableSplitter', () => ({
+  default: (props: Record<string, unknown>) => (
+    <div data-testid="resizable-splitter" onMouseDown={props.onMouseDown as React.MouseEventHandler} />
+  ),
+}));
+
+vi.mock('../hooks/useResizable', () => ({
+  default: () => ({
+    ratio: 0.3,
+    isDragging: false,
+    containerRef: { current: null },
+    splitterProps: { onMouseDown: vi.fn() },
+    topHeight: 120,
+    bottomHeight: 280,
+  }),
+}));
+
 vi.mock('../components/ConnectionPanel', () => ({
   default: () => <div data-testid="connection-panel" />,
 }));
@@ -416,5 +433,33 @@ describe('MainLayout', () => {
     await userEvent.click(executeButton);
 
     expect(mockExecuteQuery).toHaveBeenCalled();
+  });
+
+  // ---- Sprint 11 tests: Resizable splitter integration ----
+
+  // FE-11-18
+  it('renders ResizableSplitter between query editor and result table', () => {
+    render(<MainLayout />);
+    const splitter = screen.getByTestId('resizable-splitter');
+    expect(splitter).toBeInTheDocument();
+  });
+
+  // FE-11-19
+  it('query editor receives height prop from useResizable', () => {
+    render(<MainLayout />);
+    // useResizableモックがtopHeight=120を返すので、QueryEditorに渡されるheightを確認
+    // capturedQueryEditorPropsはモックのQueryEditorで捕捉される
+    expect(capturedQueryEditorProps.height).toBeDefined();
+    // null ではない場合は数値型であること
+    if (capturedQueryEditorProps.height !== null && capturedQueryEditorProps.height !== undefined) {
+      expect(typeof capturedQueryEditorProps.height).toBe('number');
+    }
+  });
+
+  // FE-11-20
+  it('result table receives height prop from useResizable', () => {
+    render(<MainLayout />);
+    // useResizableモックがbottomHeight=280を返すので、ResultTableに渡されるheightを確認
+    expect(capturedResultTableProps.height).toBeDefined();
   });
 });

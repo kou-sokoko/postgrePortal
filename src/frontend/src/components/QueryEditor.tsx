@@ -129,6 +129,9 @@ const QueryEditor: React.FC<QueryEditorProps> = ({ sql, onSqlChange, onExecute, 
             },
           }}
           sx={{
+            ...(height !== undefined
+              ? { height: '100%', '& .MuiInputBase-root': { height: '100%' }, '& .MuiInputBase-input': { height: '100% !important', overflow: 'auto !important' } }
+              : {}),
             '& .MuiOutlinedInput-root': {
               fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
               fontSize: '0.85rem',

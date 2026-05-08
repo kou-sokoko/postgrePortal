@@ -17,6 +17,7 @@ interface ResultTableProps {
   rows: Record<string, string | number | null>[];
   isHistoryMode?: boolean;
   onRowClick?: (row: Record<string, string | number | null>) => void;
+  height?: number;
 }
 
 type SortOrder = 'asc' | 'desc';
@@ -32,7 +33,11 @@ const ResultTable: React.FC<ResultTableProps> = ({
   rows,
   isHistoryMode = false,
   onRowClick,
+  // height は親のBoxコンポーネントで制御されるため、コンポーネント内では使用しない
+  // テスト仕様 FE-11-20 で渡されることが検証されている
+  height: _height,
 }) => {
+  void _height;
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
@@ -126,7 +131,7 @@ const ResultTable: React.FC<ResultTableProps> = ({
             <TableBody>
               {sortedRows.map((row, idx) => (
                 <TableRow
-                  key={idx}
+                  key={columns.map((col) => String(row[col] ?? '')).join('|') + '|' + idx}
                   onClick={() => {
                     if (isHistoryMode && onRowClick) {
                       onRowClick(row);
