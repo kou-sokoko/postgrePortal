@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -11,32 +11,32 @@ import {
   Tab,
   IconButton,
   TextField,
-} from '@mui/material';
-import StorageIcon from '@mui/icons-material/Storage';
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
-import theme from './theme';
-import ConnectionPanel from './ConnectionPanel';
-import DatabaseSelector from './DatabaseSelector';
-import ObjectTree from './ObjectTree';
-import CreateDatabaseModal from './CreateDatabaseModal';
-import CreateSchemaModal from './CreateSchemaModal';
-import CreateTableModal from './CreateTableModal';
-import TableStructureModal from './TableStructureModal';
-import QueryEditor from './QueryEditor';
-import ResultTable from './ResultTable';
-import ResizableSplitter from './ResizableSplitter';
-import useResizable from '../hooks/useResizable';
-import { useDatabases } from '../hooks/useDatabases';
-import { useDatabaseOperations } from '../hooks/useDatabaseOperations';
-import { useSchemaOperations } from '../hooks/useSchemaOperations';
-import { useTableOperations } from '../hooks/useTableOperations';
-import { useQueryExecution } from '../hooks/useQueryExecution';
-import type { ConnectionInfo } from '../types/api';
-import type { DatabaseFormData } from '../types/database';
-import type { SchemaFormData } from '../types/schema';
-import type { ColumnInfo, IndexInfo } from '../types/table';
-import type { QueryResult } from '../types/query';
+} from "@mui/material";
+import StorageIcon from "@mui/icons-material/Storage";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import theme from "./theme";
+import ConnectionPanel from "./ConnectionPanel";
+import DatabaseSelector from "./DatabaseSelector";
+import ObjectTree from "./ObjectTree";
+import CreateDatabaseModal from "./CreateDatabaseModal";
+import CreateSchemaModal from "./CreateSchemaModal";
+import CreateTableModal from "./CreateTableModal";
+import TableStructureModal from "./TableStructureModal";
+import QueryEditor from "./QueryEditor";
+import ResultTable from "./ResultTable";
+import ResizableSplitter from "./ResizableSplitter";
+import useResizable from "../hooks/useResizable";
+import { useDatabases } from "../hooks/useDatabases";
+import { useDatabaseOperations } from "../hooks/useDatabaseOperations";
+import { useSchemaOperations } from "../hooks/useSchemaOperations";
+import { useTableOperations } from "../hooks/useTableOperations";
+import { useQueryExecution } from "../hooks/useQueryExecution";
+import type { ConnectionInfo } from "../types/api";
+import type { DatabaseFormData } from "../types/database";
+import type { SchemaFormData } from "../types/schema";
+import type { ColumnInfo, IndexInfo } from "../types/table";
+import type { QueryResult } from "../types/query";
 
 interface QueryTab {
   id: string;
@@ -54,7 +54,13 @@ interface TabLabelProps {
   onClose: (id: string) => void;
 }
 
-const TabLabel: React.FC<TabLabelProps> = ({ tab, isActive, canClose, onRename, onClose }) => {
+const TabLabel: React.FC<TabLabelProps> = ({
+  tab,
+  isActive,
+  canClose,
+  onRename,
+  onClose,
+}) => {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(tab.name);
 
@@ -66,18 +72,20 @@ const TabLabel: React.FC<TabLabelProps> = ({ tab, isActive, canClose, onRename, 
 
   const commitRename = () => {
     const trimmed = editValue.trim();
-    onRename(tab.id, trimmed !== '' ? trimmed : tab.name);
+    onRename(tab.id, trimmed !== "" ? trimmed : tab.name);
     setEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') commitRename();
-    if (e.key === 'Escape') setEditing(false);
+    if (e.key === "Enter") commitRename();
+    if (e.key === "Escape") setEditing(false);
     e.stopPropagation();
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: 180 }}>
+    <Box
+      sx={{ display: "flex", alignItems: "center", gap: 0.5, maxWidth: 180 }}
+    >
       {editing ? (
         <TextField
           value={editValue}
@@ -90,8 +98,8 @@ const TabLabel: React.FC<TabLabelProps> = ({ tab, isActive, canClose, onRename, 
           onClick={(e) => e.stopPropagation()}
           sx={{
             width: 110,
-            '& .MuiInputBase-input': {
-              fontSize: '0.8rem',
+            "& .MuiInputBase-input": {
+              fontSize: "0.8rem",
               py: 0,
             },
           }}
@@ -100,14 +108,14 @@ const TabLabel: React.FC<TabLabelProps> = ({ tab, isActive, canClose, onRename, 
         <Typography
           onDoubleClick={handleDoubleClick}
           sx={{
-            fontSize: '0.82rem',
+            fontSize: "0.82rem",
             fontWeight: isActive ? 600 : 400,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
             maxWidth: canClose ? 110 : 140,
-            cursor: 'text',
-            userSelect: 'none',
+            cursor: "text",
+            userSelect: "none",
           }}
         >
           {tab.name}
@@ -121,11 +129,14 @@ const TabLabel: React.FC<TabLabelProps> = ({ tab, isActive, canClose, onRename, 
           }}
           sx={{
             fontSize: 14,
-            color: 'text.secondary',
+            color: "text.secondary",
             flexShrink: 0,
-            borderRadius: '50%',
-            '&:hover': { color: 'text.primary', backgroundColor: 'action.hover' },
-            cursor: 'pointer',
+            borderRadius: "50%",
+            "&:hover": {
+              color: "text.primary",
+              backgroundColor: "action.hover",
+            },
+            cursor: "pointer",
           }}
         />
       )}
@@ -138,7 +149,7 @@ let tabCounter = 1;
 const createTab = (): QueryTab => ({
   id: `tab-${Date.now()}-${tabCounter}`,
   name: `クエリ${tabCounter++}`,
-  sql: '',
+  sql: "",
   queryResult: null,
   isHistoryMode: false,
 });
@@ -147,18 +158,19 @@ const MainLayout: React.FC = () => {
   const { databases, fetchDatabases, setDatabases } = useDatabases();
   const { createDatabase, deleteDatabase } = useDatabaseOperations();
   const { fetchSchemas, createSchema, deleteSchema } = useSchemaOperations();
-  const { fetchTables, createTable, deleteTable, fetchTableStructure } = useTableOperations();
+  const { fetchTables, createTable, deleteTable, fetchTableStructure } =
+    useTableOperations();
   const { executeQuery, fetchHistory } = useQueryExecution();
 
   const [selectedDb, setSelectedDb] = useState<string | null>(null);
   const [dbModalOpen, setDbModalOpen] = useState(false);
   const [schemaModalOpen, setSchemaModalOpen] = useState(false);
-  const [schemaModalDbName, setSchemaModalDbName] = useState('');
+  const [schemaModalDbName, setSchemaModalDbName] = useState("");
   const [tableModalOpen, setTableModalOpen] = useState(false);
-  const [tableModalDbName, setTableModalDbName] = useState('');
-  const [tableModalSchemaName, setTableModalSchemaName] = useState('');
+  const [tableModalDbName, setTableModalDbName] = useState("");
+  const [tableModalSchemaName, setTableModalSchemaName] = useState("");
   const [structureModalOpen, setStructureModalOpen] = useState(false);
-  const [structureTableName, setStructureTableName] = useState('');
+  const [structureTableName, setStructureTableName] = useState("");
   const [structureColumns, setStructureColumns] = useState<ColumnInfo[]>([]);
   const [structureIndexes, setStructureIndexes] = useState<IndexInfo[]>([]);
 
@@ -181,18 +193,21 @@ const MainLayout: React.FC = () => {
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
-  const updateActiveTab = useCallback((patch: Partial<QueryTab>) => {
-    setTabs((prev) =>
-      prev.map((t) => (t.id === activeTabId ? { ...t, ...patch } : t))
-    );
-  }, [activeTabId]);
+  const updateActiveTab = useCallback(
+    (patch: Partial<QueryTab>) => {
+      setTabs((prev) =>
+        prev.map((t) => (t.id === activeTabId ? { ...t, ...patch } : t)),
+      );
+    },
+    [activeTabId],
+  );
 
   const connInfoRef = useRef<ConnectionInfo>({
-    host: 'localhost',
+    host: "localhost",
     port: 5432,
-    database: 'postgres',
-    user: 'postgres',
-    password: '',
+    database: "postgres",
+    user: "postgres",
+    password: "",
   });
 
   const handleAddTab = () => {
@@ -222,7 +237,8 @@ const MainLayout: React.FC = () => {
     void fetchDatabases(connInfo);
   };
 
-  const handleCreateDatabase = () => {
+  const handleCreateDatabase = (connInfo: ConnectionInfo) => {
+    connInfoRef.current = connInfo;
     setDbModalOpen(true);
   };
 
@@ -241,10 +257,10 @@ const MainLayout: React.FC = () => {
     setTabs((prev) =>
       prev.map((t) => ({
         ...t,
-        sql: '',
+        sql: "",
         queryResult: null,
         isHistoryMode: false,
-      }))
+      })),
     );
 
     void fetchSchemas(connInfoRef.current, name).then((schemas) => {
@@ -252,8 +268,8 @@ const MainLayout: React.FC = () => {
         databases.map((db) =>
           db.name === name
             ? { ...db, schemas: schemas.map((s) => ({ name: s, tables: [] })) }
-            : db
-        )
+            : db,
+        ),
       );
     });
   };
@@ -265,16 +281,23 @@ const MainLayout: React.FC = () => {
   };
 
   const handleCreateSchemaSubmit = async (formData: SchemaFormData) => {
-    const success = await createSchema(connInfoRef.current, schemaModalDbName, formData);
+    const success = await createSchema(
+      connInfoRef.current,
+      schemaModalDbName,
+      formData,
+    );
     if (success) {
       setSchemaModalOpen(false);
-      const schemas = await fetchSchemas(connInfoRef.current, schemaModalDbName);
+      const schemas = await fetchSchemas(
+        connInfoRef.current,
+        schemaModalDbName,
+      );
       setDatabases(
         databases.map((db) =>
           db.name === schemaModalDbName
             ? { ...db, schemas: schemas.map((s) => ({ name: s, tables: [] })) }
-            : db
-        )
+            : db,
+        ),
       );
     }
   };
@@ -300,10 +323,18 @@ const MainLayout: React.FC = () => {
   };
 
   const handleCreateTableSubmit = async (ddl: string) => {
-    const success = await createTable(connInfoRef.current, tableModalDbName, ddl);
+    const success = await createTable(
+      connInfoRef.current,
+      tableModalDbName,
+      ddl,
+    );
     if (success) {
       setTableModalOpen(false);
-      const tables = await fetchTables(connInfoRef.current, tableModalDbName, tableModalSchemaName);
+      const tables = await fetchTables(
+        connInfoRef.current,
+        tableModalDbName,
+        tableModalSchemaName,
+      );
       setDatabases(
         databases.map((db) =>
           db.name === tableModalDbName
@@ -312,11 +343,11 @@ const MainLayout: React.FC = () => {
                 schemas: db.schemas.map((s) =>
                   s.name === tableModalSchemaName
                     ? { ...s, tables: tables.map((t) => ({ name: t })) }
-                    : s
+                    : s,
                 ),
               }
-            : db
-        )
+            : db,
+        ),
       );
     }
   };
@@ -325,18 +356,23 @@ const MainLayout: React.FC = () => {
     if (!selectedDb) return;
     const dbName = selectedDb;
     if (window.confirm(`${schemaName}を削除しますか？`)) {
-      void deleteSchema(connInfoRef.current, dbName, schemaName).then(async (success) => {
-        if (success) {
-          const schemas = await fetchSchemas(connInfoRef.current, dbName);
-          setDatabases(
-            databases.map((db) =>
-              db.name === dbName
-                ? { ...db, schemas: schemas.map((s) => ({ name: s, tables: [] })) }
-                : db
-            )
-          );
-        }
-      });
+      void deleteSchema(connInfoRef.current, dbName, schemaName).then(
+        async (success) => {
+          if (success) {
+            const schemas = await fetchSchemas(connInfoRef.current, dbName);
+            setDatabases(
+              databases.map((db) =>
+                db.name === dbName
+                  ? {
+                      ...db,
+                      schemas: schemas.map((s) => ({ name: s, tables: [] })),
+                    }
+                  : db,
+              ),
+            );
+          }
+        },
+      );
     }
   };
 
@@ -347,7 +383,11 @@ const MainLayout: React.FC = () => {
       void deleteTable(connInfoRef.current, dbName, schemaName, tableName).then(
         async (success) => {
           if (success) {
-            const tables = await fetchTables(connInfoRef.current, dbName, schemaName);
+            const tables = await fetchTables(
+              connInfoRef.current,
+              dbName,
+              schemaName,
+            );
             setDatabases(
               databases.map((db) =>
                 db.name === dbName
@@ -356,30 +396,33 @@ const MainLayout: React.FC = () => {
                       schemas: db.schemas.map((s) =>
                         s.name === schemaName
                           ? { ...s, tables: tables.map((t) => ({ name: t })) }
-                          : s
+                          : s,
                       ),
                     }
-                  : db
-              )
+                  : db,
+              ),
             );
           }
-        }
+        },
       );
     }
   };
 
   const handleClickTable = (schemaName: string, tableName: string) => {
     if (!selectedDb) return;
-    void fetchTableStructure(connInfoRef.current, selectedDb, schemaName, tableName).then(
-      (structure) => {
-        if (structure) {
-          setStructureTableName(tableName);
-          setStructureColumns(structure.columns);
-          setStructureIndexes(structure.indexes);
-          setStructureModalOpen(true);
-        }
+    void fetchTableStructure(
+      connInfoRef.current,
+      selectedDb,
+      schemaName,
+      tableName,
+    ).then((structure) => {
+      if (structure) {
+        setStructureTableName(tableName);
+        setStructureColumns(structure.columns);
+        setStructureIndexes(structure.indexes);
+        setStructureModalOpen(true);
       }
-    );
+    });
   };
 
   const handleExpandSchema = (schemaName: string) => {
@@ -394,31 +437,37 @@ const MainLayout: React.FC = () => {
                 schemas: db.schemas.map((s) =>
                   s.name === schemaName
                     ? { ...s, tables: tables.map((t) => ({ name: t })) }
-                    : s
+                    : s,
                 ),
               }
-            : db
-        )
+            : db,
+        ),
       );
     });
   };
 
   const handleExecuteQuery = (sql: string, limit: number) => {
     if (!selectedDb) {
-      alert('データベースを選択してください');
+      alert("データベースを選択してください");
       return;
     }
     const tabId = activeTabId;
-    void executeQuery(connInfoRef.current, selectedDb, sql, limit).then((result) => {
-      setTabs((prev) =>
-        prev.map((t) => (t.id === tabId ? { ...t, queryResult: result, isHistoryMode: false } : t))
-      );
-    });
+    void executeQuery(connInfoRef.current, selectedDb, sql, limit).then(
+      (result) => {
+        setTabs((prev) =>
+          prev.map((t) =>
+            t.id === tabId
+              ? { ...t, queryResult: result, isHistoryMode: false }
+              : t,
+          ),
+        );
+      },
+    );
   };
 
   const handleShowHistory = () => {
     if (!selectedDb) {
-      alert('データベースを選択してください');
+      alert("データベースを選択してください");
       return;
     }
     const tabId = activeTabId;
@@ -429,11 +478,15 @@ const MainLayout: React.FC = () => {
             t.id === tabId
               ? {
                   ...t,
-                  queryResult: { columns: result.columns, rows: result.rows, affected_rows: null },
+                  queryResult: {
+                    columns: result.columns,
+                    rows: result.rows,
+                    affected_rows: null,
+                  },
                   isHistoryMode: true,
                 }
-              : t
-          )
+              : t,
+          ),
         );
       }
     });
@@ -441,23 +494,28 @@ const MainLayout: React.FC = () => {
 
   const handleTableDrop = (schemaName: string, tableName: string) => {
     if (!selectedDb) return;
-    void fetchTableStructure(connInfoRef.current, selectedDb, schemaName, tableName).then(
-      (structure) => {
-        if (structure && structure.columns.length > 0) {
-          const columnList = structure.columns
-            .map((col) => ` ${col.column_name}`)
-            .join(',\n');
-          const generatedSql = `select\n${columnList}\nfrom\n ${schemaName}.${tableName}`;
-          updateActiveTab({ sql: generatedSql });
-        } else if (structure && structure.columns.length === 0) {
-          alert('カラム情報が取得できませんでした');
-        }
+    void fetchTableStructure(
+      connInfoRef.current,
+      selectedDb,
+      schemaName,
+      tableName,
+    ).then((structure) => {
+      if (structure && structure.columns.length > 0) {
+        const columnList = structure.columns
+          .map((col) => ` ${col.column_name}`)
+          .join(",\n");
+        const generatedSql = `select\n${columnList}\nfrom\n ${schemaName}.${tableName}`;
+        updateActiveTab({ sql: generatedSql });
+      } else if (structure && structure.columns.length === 0) {
+        alert("カラム情報が取得できませんでした");
       }
-    );
+    });
   };
 
-  const handleHistoryRowClick = (row: Record<string, string | number | null>) => {
-    const queryText = row['query_text'];
+  const handleHistoryRowClick = (
+    row: Record<string, string | number | null>,
+  ) => {
+    const queryText = row["query_text"];
     if (queryText !== null && queryText !== undefined) {
       updateActiveTab({ sql: String(queryText) });
     }
@@ -468,10 +526,10 @@ const MainLayout: React.FC = () => {
       <CssBaseline />
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          backgroundColor: 'background.default',
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          backgroundColor: "background.default",
         }}
       >
         {/* Header */}
@@ -479,7 +537,7 @@ const MainLayout: React.FC = () => {
           position="static"
           elevation={0}
           sx={{
-            background: 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
+            background: "linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)",
           }}
         >
           <Toolbar variant="dense" sx={{ minHeight: 48 }}>
@@ -487,10 +545,10 @@ const MainLayout: React.FC = () => {
             <Typography
               variant="h5"
               sx={{
-                color: '#fff',
-                fontSize: '1.1rem',
+                color: "#fff",
+                fontSize: "1.1rem",
                 fontWeight: 700,
-                letterSpacing: '0.05em',
+                letterSpacing: "0.05em",
               }}
             >
               PostgreSQL 管理ポータル
@@ -499,18 +557,18 @@ const MainLayout: React.FC = () => {
         </AppBar>
 
         {/* Main content */}
-        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
           {/* Left pane */}
           <Box
             data-testid="left-pane"
             sx={{
               width: 320,
               minWidth: 280,
-              display: 'flex',
-              flexDirection: 'column',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: '#fff',
+              display: "flex",
+              flexDirection: "column",
+              borderRight: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "#fff",
             }}
           >
             <ConnectionPanel
@@ -527,7 +585,9 @@ const MainLayout: React.FC = () => {
             />
             <Divider />
             <ObjectTree
-              schemas={databases.find((db) => db.name === selectedDb)?.schemas ?? []}
+              schemas={
+                databases.find((db) => db.name === selectedDb)?.schemas ?? []
+              }
               selectedDb={selectedDb}
               onEditSchema={handleEditSchema}
               onDeleteSchema={handleDeleteSchema}
@@ -543,20 +603,20 @@ const MainLayout: React.FC = () => {
             ref={resizableContainerRef}
             sx={{
               flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              backgroundColor: '#fff',
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              backgroundColor: "#fff",
             }}
           >
             {/* Tab bar */}
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: '#f5f5f5',
+                display: "flex",
+                alignItems: "center",
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                backgroundColor: "#f5f5f5",
                 minHeight: 40,
                 flexShrink: 0,
               }}
@@ -577,12 +637,12 @@ const MainLayout: React.FC = () => {
                 sx={{
                   minHeight: 40,
                   flex: 1,
-                  '& .MuiTabs-indicator': { height: 2 },
-                  '& .MuiTab-root': {
+                  "& .MuiTabs-indicator": { height: 2 },
+                  "& .MuiTab-root": {
                     minHeight: 40,
                     py: 0,
                     px: 1.5,
-                    textTransform: 'none',
+                    textTransform: "none",
                   },
                 }}
               >
@@ -610,10 +670,10 @@ const MainLayout: React.FC = () => {
               sx={{
                 ...(topHeight !== null
                   ? { height: topHeight, flexShrink: 0 }
-                  : { flex: '0 0 30%' }),
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
+                  : { flex: "0 0 30%" }),
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
               <QueryEditor
@@ -637,9 +697,9 @@ const MainLayout: React.FC = () => {
                 ...(bottomHeight !== null
                   ? { height: bottomHeight, flexShrink: 0 }
                   : { flex: 1 }),
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
               <ResultTable
